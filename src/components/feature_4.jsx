@@ -6,16 +6,41 @@ export default function LoadingPage() {
   const [phase, setPhase] = useState('loading'); // 'loading', 'splitting', 'lshape', 'home'
   const [timer, setTimer] = useState(0);
   const [completed, setCompleted] = useState(false);
-  
-  // Refs for animation control
+    // Refs for animation control
   const intervalRef = useRef(null);
+  const timerIntervalRef = useRef(null);
+  const containerRef = useRef(null);
   const loadingBarRef = useRef(null);
   const leftPartRef = useRef(null);
   const rightPartRef = useRef(null);
   const verticalLRef = useRef(null);
   const horizontalLRef = useRef(null);
+  
+  // Separate useEffect for the timer to ensure it's controlled independently
+  useEffect(() => {
+    // Only run timer if we're not in home phase and not completed
+    if (phase !== 'home' && !completed) {
+      timerIntervalRef.current = setInterval(() => {
+        setTimer(prev => {
+          // Cap at 100
+          if (prev >= 100) {
+            clearInterval(timerIntervalRef.current);
+            return 100;
+          }
+          return prev + 1;
+        });
+      }, 50);
+    }
+    
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, [phase, completed]);
 
-  // Animation sequence
+  // Animation sequence control
   useEffect(() => {
     // Function to stop all animations and timers
     const stopAllTimers = () => {
@@ -23,99 +48,71 @@ export default function LoadingPage() {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
     };
 
     // Only start if not already completed
     if (!completed) {
+      // Loading bar animation
       intervalRef.current = setInterval(() => {
-        setTimer(prev => {
-          const newTime = prev + 1;
-          
-          // Update progress until 100%
-          if (newTime <= 100) {
-            setProgress(newTime);
+        setProgress(prev => {
+          // When loading reaches 100%, schedule next phase
+          if (prev >= 100) {
+            clearInterval(intervalRef.current);
             
-            // At 100%, trigger the splitting animation
-            if (newTime === 100) {
-              // Set a timeout to switch to the splitting phase after a brief pause
-              setTimeout(() => {
-                // Get positions for a smooth transition
-                const loadingBar = loadingBarRef.current;
-                if (loadingBar) {
-                  const rect = loadingBar.getBoundingClientRect();
-                  
-                  // Position the splitting parts at the exact position of the loading bar
-                  if (leftPartRef.current && rightPartRef.current) {
-                    leftPartRef.current.style.top = `${rect.top}px`;
-                    leftPartRef.current.style.left = `${rect.left}px`;
-                    rightPartRef.current.style.top = `${rect.top}px`;
-                    rightPartRef.current.style.left = `${rect.left + rect.width * 0.68}px`;
-                  }
-                }
-                
-                // Now trigger the splitting phase
-                setPhase('splitting');
-              }, 800);
-            }
-          }
-          
-          // Phase transitions with proper sequencing
-          if (newTime === 104) {
-            // Get positions from the splitting parts for L shape transition
-            const leftPart = leftPartRef.current;
-            if (leftPart && verticalLRef.current) {
-              const rect = leftPart.getBoundingClientRect();
-              verticalLRef.current.style.top = `${rect.top}px`;
-              verticalLRef.current.style.left = `${rect.left}px`;
-              
-              if (horizontalLRef.current) {
-                horizontalLRef.current.style.top = `${rect.top + rect.height * 2}px`;
-                horizontalLRef.current.style.left = `${rect.left}px`;
-              }
-            }
-            
-            // Trigger L-shape phase
-            setPhase('lshape');
-          } else if (newTime === 107) {
-            setPhase('home');
-            
-            // Set completed flag after a delay for home animation
+            // Trigger splitting phase after a brief pause
             setTimeout(() => {
-              setCompleted(true);
-              stopAllTimers();
-            }, 1500);
+              setPhase('splitting');
+              
+              // Then schedule L-shape phase
+              setTimeout(() => {
+                setPhase('lshape');
+                
+                // Finally, schedule home phase
+                setTimeout(() => {
+                  setPhase('home');
+                  
+                  // Mark as completed after home phase is shown
+                  setTimeout(() => {
+                    setCompleted(true);
+                  }, 1000);
+                }, 1500);
+              }, 1500);
+            }, 800);
+            
+            return 100;
           }
-          
-          // Safety cap to prevent timer going too high
-          if (newTime > 110) {
-            stopAllTimers();
-            return 110;
-          }
-          
-          return newTime;
+          return prev + 1;
         });
       }, 50);
     }
 
+    // Cleanup function
     return stopAllTimers;
   }, [completed]);
 
+  // Format timer display with leading zeros
   const formatTime = (time) => {
-    return time.toString().padStart(3, '0');
+    return Math.min(time, 110).toString().padStart(3, '0');
   };
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden flex items-center justify-center">
-      {/* Timer */}
+      {/* Timer display - bottom left */}
       <div className={`fixed bottom-10 left-10 text-white text-5xl font-light tracking-wider z-20 transition-opacity duration-500 ${
         phase === 'home' ? 'opacity-0' : 'opacity-100'
       }`}>
         {formatTime(timer)}
       </div>
 
-      {/* Loading Container - All animations happen in this container */}
-      <div className="relative w-80 h-48 flex items-center justify-center">
-        {/* Initial Loading Bar */}
+      {/* Main animation container - all animations happen in this same container */}
+      <div ref={containerRef} className="relative w-80 h-48 flex items-center justify-center">
+        
+        {/* 1. Initial Loading Bar Phase */}
         <div 
           className={`absolute transition-all duration-500 ${
             phase === 'loading' ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
@@ -148,10 +145,10 @@ export default function LoadingPage() {
           </div>
         </div>
 
-        {/* Splitting Animation - Positioned absolutely to match loading bar location */}
+        {/* 2. Splitting Phase - Same position as loading bar */}
         <div 
-          className={`absolute top-0 left-0 w-full transition-all duration-700 ${
-            phase === 'splitting' ? 'opacity-100' : 'opacity-0'
+          className={`absolute top-0 left-0 w-full h-full transition-all duration-700 ${
+            phase === 'splitting' ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
           {/* Left part (2/3) */}
@@ -160,6 +157,10 @@ export default function LoadingPage() {
             className="absolute w-52 h-16 bg-gradient-to-r from-white to-gray-300 rounded transition-all duration-700 ease-out"
             style={{ 
               transform: phase === 'splitting' ? 'translateX(-10px)' : 'translateX(0)',
+              top: '50%',
+              left: '50%',
+              marginLeft: '-40px', // Half of width to center
+              marginTop: '-8px',   // Half of height to center
               opacity: phase === 'splitting' ? 1 : 0
             }}
           />
@@ -170,15 +171,18 @@ export default function LoadingPage() {
             className="absolute w-24 h-16 bg-gradient-to-r from-white to-gray-300 rounded transition-all duration-700 ease-out"
             style={{ 
               transform: phase === 'splitting' ? 'translateX(10px)' : 'translateX(0)',
+              top: '50%',
+              left: '70%',  // Position it after the left part
+              marginTop: '-8px',  // Half of height to center
               opacity: phase === 'splitting' ? 1 : 0
             }}
           />
         </div>
 
-        {/* L-Shape - Also positioned absolutely to maintain position */}
+        {/* 3. L-Shape Phase - Same position as the splitting elements */}
         <div 
           className={`absolute top-0 left-0 w-full h-full transition-all duration-800 ${
-            phase === 'lshape' ? 'opacity-100' : 'opacity-0'
+            phase === 'lshape' ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
           {/* Vertical part of L */}
@@ -188,6 +192,8 @@ export default function LoadingPage() {
             style={{ 
               boxShadow: phase === 'lshape' ? '0 0 20px 5px rgba(255, 255, 255, 0.3)' : 'none',
               transform: phase === 'lshape' ? 'scaleY(1.05)' : 'scaleY(1)',
+              top: '0',
+              left: '32px', // Center it in the container
               opacity: phase === 'lshape' ? 1 : 0
             }}
           />
@@ -199,16 +205,16 @@ export default function LoadingPage() {
             style={{ 
               boxShadow: phase === 'lshape' ? '0 0 20px 5px rgba(255, 255, 255, 0.3)' : 'none',
               transform: phase === 'lshape' ? 'scaleX(1.05)' : 'scaleX(1)',
+              top: '32px', // Position it at the bottom of the vertical part
+              left: '32px', // Align with the vertical part
               opacity: phase === 'lshape' ? 1 : 0
             }}
           />
         </div>
-      </div>
-
-      {/* Home Page Content */}
+      </div>      {/* 4. Home Page Content - Full screen overlay */}
       <div 
         className={`fixed inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center flex-col text-white transition-all duration-1000 ${
-          phase === 'home' ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+          phase === 'home' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
         }`}
         style={{
           clipPath: phase === 'home' 

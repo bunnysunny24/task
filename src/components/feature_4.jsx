@@ -6,7 +6,8 @@ export default function LoadingPage() {
   const [phase, setPhase] = useState('loading'); // 'loading', 'splitting', 'lshape', 'home'
   const [timer, setTimer] = useState(0);
   const [completed, setCompleted] = useState(false);
-    // Refs for animation control
+  
+  // Refs for animation control
   const intervalRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const containerRef = useRef(null);
@@ -114,9 +115,14 @@ export default function LoadingPage() {
         
         {/* 1. Initial Loading Bar Phase */}
         <div 
-          className={`absolute transition-all duration-500 ${
+          className={`absolute w-full transition-all duration-500 ${
             phase === 'loading' ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
           }`}
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+          }}
         >
           <div 
             ref={loadingBarRef}
@@ -143,75 +149,80 @@ export default function LoadingPage() {
           <div className="text-white text-right mt-2 text-sm font-mono">
             {progress}%
           </div>
-        </div>
-
-        {/* 2. Splitting Phase - Same position as loading bar */}
+        </div>        {/* 2. Splitting Phase */}
         <div 
-          className={`absolute top-0 left-0 w-full h-full transition-all duration-700 ${
+          className={`absolute w-full h-full flex items-center justify-center transition-all duration-700 ${
             phase === 'splitting' ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
-          {/* Left part (2/3) */}
-          <div 
-            ref={leftPartRef}
-            className="absolute w-52 h-16 bg-gradient-to-r from-white to-gray-300 rounded transition-all duration-700 ease-out"
-            style={{ 
-              transform: phase === 'splitting' ? 'translateX(-10px)' : 'translateX(0)',
-              top: '50%',
-              left: '50%',
-              marginLeft: '-40px', // Half of width to center
-              marginTop: '-8px',   // Half of height to center
-              opacity: phase === 'splitting' ? 1 : 0
-            }}
-          />
-          
-          {/* Right part (1/3) */}
-          <div 
-            ref={rightPartRef}
-            className="absolute w-24 h-16 bg-gradient-to-r from-white to-gray-300 rounded transition-all duration-700 ease-out"
-            style={{ 
-              transform: phase === 'splitting' ? 'translateX(10px)' : 'translateX(0)',
-              top: '50%',
-              left: '70%',  // Position it after the left part
-              marginTop: '-8px',  // Half of height to center
-              opacity: phase === 'splitting' ? 1 : 0
-            }}
-          />
-        </div>
-
-        {/* 3. L-Shape Phase - Same position as the splitting elements */}
+          {/* Splitting container - centered */}
+          <div className="relative" style={{ width: '80px', height: '16px' }}>
+            {/* Left part (2/3) */}
+            <div 
+              ref={leftPartRef}
+              className="absolute w-52 h-16 bg-gradient-to-r from-white to-gray-300 rounded transition-all duration-700 ease-out"
+              style={{ 
+                transform: phase === 'splitting' ? 'translateX(-45px)' : 'translateX(0)',
+                left: '-40px', // Positioned to match loading bar's center position
+                top: '-8px', // Center vertically
+                opacity: phase === 'splitting' ? 1 : 0
+              }}
+            />
+            
+            {/* Right part (1/3) */}
+            <div 
+              ref={rightPartRef}
+              className="absolute w-24 h-16 bg-gradient-to-r from-white to-gray-300 rounded transition-all duration-700 ease-out"
+              style={{ 
+                transform: phase === 'splitting' ? 'translateX(50px)' : 'translateX(0)',
+                left: '12px', // Positioned to split from the left part
+                top: '-8px', // Center vertically
+                opacity: phase === 'splitting' ? 1 : 0
+              }}
+            />
+          </div>
+        </div>{/* 3. L-Shape Phase */}
         <div 
-          className={`absolute top-0 left-0 w-full h-full transition-all duration-800 ${
+          className={`absolute w-full h-full flex items-center justify-center transition-all duration-800 ${
             phase === 'lshape' ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
-          {/* Vertical part of L */}
-          <div 
-            ref={verticalLRef}
-            className="absolute w-16 h-48 bg-white rounded transition-all duration-800 ease-out" 
-            style={{ 
-              boxShadow: phase === 'lshape' ? '0 0 20px 5px rgba(255, 255, 255, 0.3)' : 'none',
-              transform: phase === 'lshape' ? 'scaleY(1.05)' : 'scaleY(1)',
-              top: '0',
-              left: '32px', // Center it in the container
-              opacity: phase === 'lshape' ? 1 : 0
-            }}
-          />
-          
-          {/* Horizontal part of L */}
-          <div 
-            ref={horizontalLRef}
-            className="absolute w-32 h-16 bg-white rounded transition-all duration-800 ease-out" 
-            style={{ 
-              boxShadow: phase === 'lshape' ? '0 0 20px 5px rgba(255, 255, 255, 0.3)' : 'none',
-              transform: phase === 'lshape' ? 'scaleX(1.05)' : 'scaleX(1)',
-              top: '32px', // Position it at the bottom of the vertical part
-              left: '32px', // Align with the vertical part
-              opacity: phase === 'lshape' ? 1 : 0
-            }}
-          />
+          {/* L shape container - perfectly centered */}
+          <div className="relative" style={{ width: '80px', height: '80px' }}>
+            {/* Vertical part of L */}
+            <div 
+              ref={verticalLRef}
+              className="absolute bg-white rounded transition-all duration-800 ease-out" 
+              style={{ 
+                boxShadow: phase === 'lshape' ? '0 0 20px 5px rgba(255, 255, 255, 0.3)' : 'none',
+                width: '16px',
+                height: '80px',
+                left: '-40px', // Centered with loading bar
+                top: '-40px',  // Centered with loading bar
+                opacity: phase === 'lshape' ? 1 : 0,
+                transform: 'translate(0, 0)' // Ensures proper positioning
+              }}
+            />
+            
+            {/* Horizontal part of L */}
+            <div 
+              ref={horizontalLRef}
+              className="absolute bg-white rounded transition-all duration-800 ease-out" 
+              style={{ 
+                boxShadow: phase === 'lshape' ? '0 0 20px 5px rgba(255, 255, 255, 0.3)' : 'none',
+                width: '80px',
+                height: '16px',
+                left: '-40px',  // Aligned with vertical part
+                top: '24px', // Forms an L with vertical part
+                opacity: phase === 'lshape' ? 1 : 0,
+                transform: 'translate(0, 0)' // Ensures proper positioning
+              }}
+            />
+          </div>
         </div>
-      </div>      {/* 4. Home Page Content - Full screen overlay */}
+      </div>
+
+      {/* 4. Home Page Content - Full screen overlay */}
       <div 
         className={`fixed inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center flex-col text-white transition-all duration-1000 ${
           phase === 'home' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'

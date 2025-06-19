@@ -69,17 +69,23 @@ export default function LoadingPage() {
               style={{ width: `${progress}%` }}
             />
           </div>
-        </div>
-
-        {/* Splitting Animation */}
+        </div>        {/* Splitting Animation */}
         <div 
           className={`absolute top-0 left-0 transition-all duration-500 ${
             phase === 'splitting' ? 'opacity-100' : 'opacity-0'
           }`}
         >
           <div className="flex gap-2">
-            <div className="w-52 h-16 bg-gradient-to-r from-white to-gray-300 rounded transform transition-all duration-700 ease-out" />
-            <div className="w-24 h-16 bg-gradient-to-r from-white to-gray-300 rounded transform transition-all duration-700 ease-out" />
+            {/* 2/3 section */}
+            <div className="w-52 h-16 bg-gradient-to-r from-white to-gray-300 rounded transform transition-all duration-700 ease-out" 
+                 style={{ 
+                   transform: phase === 'splitting' ? 'translateX(-5px)' : 'translateX(0)'
+                 }}/>
+            {/* 1/3 section */}
+            <div className="w-24 h-16 bg-gradient-to-r from-white to-gray-300 rounded transform transition-all duration-700 ease-out"
+                 style={{ 
+                   transform: phase === 'splitting' ? 'translateX(5px)' : 'translateX(0)'
+                 }}/>
           </div>
         </div>
 

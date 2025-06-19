@@ -15,16 +15,15 @@ function App() {
 
   // Theme management
   useEffect(() => {
-    // Check for saved theme preference
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setIsDarkMode(savedTheme ? savedTheme === 'dark' : prefersDark);
+    const initialDarkMode = savedTheme ? savedTheme === 'dark' : prefersDark;
+    setIsDarkMode(initialDarkMode);
+    document.documentElement.classList.toggle('dark', initialDarkMode);
   }, []);
 
   useEffect(() => {
-    // Apply theme to document
     document.documentElement.classList.toggle('dark', isDarkMode);
-    // Save theme preference
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
@@ -32,80 +31,82 @@ function App() {
   useEffect(() => {
     const checkLoadingStatus = () => {
       const homeElement = document.querySelector('[data-loading-phase="home"]');
-      if (homeElement && homeElement.getAttribute('data-loading-complete') === 'true') {
-        if (statusIntervalRef.current) {
-          clearInterval(statusIntervalRef.current);
-          statusIntervalRef.current = null;
-        }
-        
-        if (fallbackTimerRef.current) {
-          clearTimeout(fallbackTimerRef.current);
-          fallbackTimerRef.current = null;
-        }
-        
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 1500);
+      if (homeElement?.getAttribute('data-loading-complete') === 'true') {
+        clearInterval(statusIntervalRef.current);
+        clearTimeout(fallbackTimerRef.current);
+        setTimeout(() => setIsLoading(false), 1500);
       }
     };
 
     statusIntervalRef.current = setInterval(checkLoadingStatus, 500);
-    
     fallbackTimerRef.current = setTimeout(() => {
       setIsLoading(false);
-      if (statusIntervalRef.current) {
-        clearInterval(statusIntervalRef.current);
-        statusIntervalRef.current = null;
-      }
+      clearInterval(statusIntervalRef.current);
     }, 8500);
 
     return () => {
-      if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
-      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      clearInterval(statusIntervalRef.current);
+      clearTimeout(fallbackTimerRef.current);
     };
   }, []);
 
   return (
-    <div className={`App min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
+    <div className={`App min-h-screen transition-colors duration-300 ${
+      isDarkMode ? 'dark bg-dark-bg text-dark-text' : 'bg-light-bg text-light-text'
+    }`}>
       {/* Theme Toggle Button */}
       <button
         aria-label="Toggle Dark Mode"
-        className="fixed top-4 right-4 z-50 p-2 rounded-full bg-opacity-20 backdrop-blur-md border border-gray-200 dark:border-gray-700 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+        className={`fixed top-4 right-4 z-[100] p-3 rounded-full transition-all duration-200 ${
+          isDarkMode 
+            ? 'bg-dark-card hover:bg-primary-700 text-primary-400' 
+            : 'bg-light-card hover:bg-primary-100 text-primary-600'
+        } shadow-lg`}
         onClick={() => setIsDarkMode(!isDarkMode)}
       >
         {isDarkMode ? (
-          <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
         ) : (
-          <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>
         )}
       </button>
 
       {isLoading ? (
-        <LoadingPage />
+        <LoadingPage isDarkMode={isDarkMode} />
       ) : (
-        <>
-          <div className="relative z-10">
-            <section className="section-feature-1 dark:bg-gray-900 dark:text-white">
-              <InteractiveSentence />
+        <main className="relative">
+          {/* Regular features container */}
+          <div className="relative">
+            <section className={`min-h-screen section-feature-1 ${
+              isDarkMode ? 'bg-dark-bg' : 'bg-light-bg'
+            } transition-colors duration-300`}>
+              <InteractiveSentence isDarkMode={isDarkMode} />
             </section>
             
-            <section className="section-feature-2 dark:bg-gray-900 dark:text-white">
-              <RotatingLogoGrid />
+            <section className={`min-h-screen section-feature-2 ${
+              isDarkMode ? 'bg-dark-bg' : 'bg-light-bg'
+            } transition-colors duration-300`}>
+              <RotatingLogoGrid isDarkMode={isDarkMode} />
             </section>
             
-            <section className="section-feature-3 dark:bg-gray-900 dark:text-white">
-              <BSSOSSSlideshow />
+            <section className={`min-h-screen section-feature-3 ${
+              isDarkMode ? 'bg-dark-bg' : 'bg-light-bg'
+            } transition-colors duration-300`}>
+              <BSSOSSSlideshow isDarkMode={isDarkMode} />
             </section>
           </div>
 
-          <section className="section-feature-5 relative z-0">
-            <Feature5 isDarkMode={isDarkMode} />
-          </section>
-        </>
+          {/* Feature 5 container */}
+          <div className="relative">
+            <section className="section-feature-5">
+              <Feature5 isDarkMode={isDarkMode} />
+            </section>
+          </div>
+        </main>
       )}
     </div>
   );

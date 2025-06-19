@@ -11,6 +11,7 @@ const BSSOSSSlideshow = () => {
   const [previousIndex, setPreviousIndex] = useState(null); // Track previous index for transitions
   const timeSeriesRef = useRef(null);
   const buttonRefs = useRef([]);
+  
   const sections = [
     {
       id: 'billing',
@@ -70,17 +71,22 @@ const BSSOSSSlideshow = () => {
         metrics: ['Real-time processing', 'Event correlation', 'Analytics dashboard']
       }
     }
-  ];  const SECTION_DURATION = 8000; // 8 seconds per section to allow for animations
+  ];
+  
+  const SECTION_DURATION = 8000; // 8 seconds per section to allow for animations
   const BUTTON_ANIMATION_DURATION = 1000; // 1 second for button expansion
   const MIN_BUTTON_WIDTH = 160; // Minimum button width
-  const MAX_BUTTON_WIDTH = 320; // Maximum expanded button width// Animation sequence handling
+  const MAX_BUTTON_WIDTH = 320; // Maximum expanded button width
+  
+  // Animation sequence handling
   useEffect(() => {
     let buttonAnimationTimeout;
     let timeSeriesAnimationTimeout;
     let contentAnimationTimeout;
     let buttonWidthAnimationInterval;
     
-    if (progress === 0) {      // Reset all animations at the start of a new section
+    if (progress === 0) {
+      // Reset all animations at the start of a new section
       setButtonExpanded(false);
       setAnimatingSection(false);
       setAnimationStage('button');
@@ -95,7 +101,8 @@ const BSSOSSSlideshow = () => {
       if (timeSeriesRef.current) {
         timeSeriesRef.current.classList.remove('expanded');
       }
-        // Step 1: Trigger button expansion after a short delay
+      
+      // Step 1: Trigger button expansion after a short delay
       buttonAnimationTimeout = setTimeout(() => {
         setButtonExpanded(true);
         setAnimationStage('button');
@@ -151,7 +158,8 @@ const BSSOSSSlideshow = () => {
       clearTimeout(contentAnimationTimeout);
       clearInterval(buttonWidthAnimationInterval);
     };
-  }, [progress]);  // Main progress interval
+  }, [progress]);
+    // Main progress interval
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress(prev => {
@@ -171,7 +179,9 @@ const BSSOSSSlideshow = () => {
     }, 50);
 
     return () => clearInterval(interval);
-  }, [activeIndex]); // Also depend on activeIndexconst handleSectionClick = (index) => {
+  }, [activeIndex]); // sections.length is static and doesn't need to be in dependencies
+
+  const handleSectionClick = (index) => {
     setPreviousIndex(activeIndex);
     setActiveIndex(index);
     setProgress(0);
@@ -299,7 +309,9 @@ const BSSOSSSlideshow = () => {
       default:
         return null;
     }
-  };  const renderContent = () => {
+  };
+
+  const renderContent = () => {
     const section = sections[activeIndex];
     const ChartIcon = section.chartIcon;
     
@@ -347,14 +359,17 @@ const BSSOSSSlideshow = () => {
             <span className="text-gray-800">BSS/OSS </span>
             <span className="text-gray-600 italic">Capabilities</span>
           </h1>
-        </div>        {/* Navigation Buttons */}
+        </div>
+        
+        {/* Navigation Buttons */}
         <div className="flex justify-center mb-12">
           <div className="flex space-x-4">
             {sections.map((section, index) => {
               const Icon = section.icon;
               const isActive = index === activeIndex;
               
-              return (                <button
+              return (
+                <button
                   key={section.id}
                   ref={(el) => (buttonRefs.current[index] = el)}
                   onClick={() => handleSectionClick(index)}
@@ -363,7 +378,8 @@ const BSSOSSSlideshow = () => {
                     transition-all duration-700 ease-in-out
                     ${isActive ? 'shadow-lg' : 'opacity-70 hover:opacity-90'}
                     ${isActive && buttonExpanded ? 'button-expanded' : ''}
-                  `}                  style={{
+                  `}
+                  style={{
                     background: isActive 
                       ? `linear-gradient(90deg, ${section.color.replace('bg-', '').replace('-300', '')} 0%, ${section.color.replace('bg-', '').replace('-300', '')} ${progress}%, rgba(255,255,255,0.8) ${progress}%, rgba(255,255,255,0.8) 100%)`
                       : 'rgba(255,255,255,0.8)',
@@ -425,7 +441,9 @@ const BSSOSSSlideshow = () => {
             BOOK A MEETING
           </button>
         </div>
-      </div>      <style>{`
+      </div>
+      
+      <style>{`
         .time-series-container {
           border-left: 2px solid;
           border-bottom: 2px solid;
@@ -458,6 +476,24 @@ const BSSOSSSlideshow = () => {
         
         .button-expanded {
           animation: button-pulse 2s infinite;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .button-expanded::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+          animation: button-shine 1.5s infinite;
+        }
+        
+        @keyframes button-shine {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
         }
         
         @keyframes bounce-subtle {
@@ -471,4 +507,6 @@ const BSSOSSSlideshow = () => {
       `}</style>
     </div>
   );
+};
+
 export default BSSOSSSlideshow;

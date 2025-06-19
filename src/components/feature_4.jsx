@@ -4,29 +4,38 @@ export default function LoadingPage() {
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState('loading'); // 'loading', 'splitting', 'lshape', 'home'
   const [timer, setTimer] = useState(0);
+  const [completed, setCompleted] = useState(false);
 
+  // Animation sequence
   useEffect(() => {
     const interval = setInterval(() => {
       setTimer(prev => {
         const newTime = prev + 1;
         
-        // Update progress based on timer
+        // Update progress based on timer - go up to exactly 100
         if (newTime <= 100) {
           setProgress(newTime);
+          
+          // When we reach 100, start the splitting phase
+          if (newTime === 100) {
+            setTimeout(() => setPhase('splitting'), 800); // Pause at 100% briefly
+          }
         }
         
-        // Phase transitions
-        if (newTime === 100) {
-          setTimeout(() => setPhase('splitting'), 500);
-        } else if (newTime === 102) {
+        // Phase transitions after 100
+        if (newTime === 103) {
           setPhase('lshape');
-        } else if (newTime === 105) {
+        } else if (newTime === 106) {
           setPhase('home');
+          // Set completed flag after a short delay to allow home animation to play
+          setTimeout(() => {
+            setCompleted(true);
+          }, 1500);
         }
         
         return newTime;
       });
-    }, 50);
+    }, 50); // Timer ticks every 50ms
 
     return () => clearInterval(interval);
   }, []);
@@ -87,13 +96,13 @@ export default function LoadingPage() {
             <div className="w-32 h-16 bg-white rounded absolute top-32 transform transition-all duration-800 ease-out" />
           </div>
         </div>
-      </div>
-
-      {/* Home Page Content */}
+      </div>      {/* Home Page Content */}
       <div 
         className={`fixed inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center flex-col text-white transition-all duration-1000 ${
           phase === 'home' ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
         }`}
+        data-loading-phase={phase}
+        data-loading-complete={completed.toString()}
       >
         <div className="relative">
           {/* Decorative floating shapes */}
